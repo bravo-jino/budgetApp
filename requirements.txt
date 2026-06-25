@@ -3,3 +3,4 @@ pytest-cov
 radon
 xenon
 flake8
+Flask

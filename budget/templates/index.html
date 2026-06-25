@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>통합 DB 가계부</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">SQLite Budget Dashboard</p>
+          <h1>통합 DB 가계부</h1>
+        </div>
+        <form class="month-picker" method="get">
+          <label for="month">월 선택</label>
+          <select id="month" name="month" onchange="this.form.submit()">
+            {% for month in dashboard.months %}
+              <option value="{{ month.month }}" {% if month.month == dashboard.selected_month %}selected{% endif %}>
+                {{ month.month }}
+              </option>
+            {% endfor %}
+          </select>
+        </form>
+      </header>
+
+      <section class="metrics">
+        <article>
+          <span>통합 거래 수</span>
+          <strong>{{ dashboard.transaction_count }}</strong>
+        </article>
+        <article>
+          <span>전체 잔액</span>
+          <strong>{{ dashboard.total_balance }}</strong>
+        </article>
+        <article>
+          <span>선택 월</span>
+          <strong>{{ dashboard.selected_month }}</strong>
+        </article>
+      </section>
+
+      <section class="grid">
+        <section class="panel form-panel">
+          <h2>거래 등록</h2>
+          <form class="entry-form" method="post" action="{{ url_for('create') }}">
+            <input type="date" name="date" required>
+            <select name="type" required>
+              <option value="지출">지출</option>
+              <option value="수입">수입</option>
+              <option value="기타수입">기타수입</option>
+            </select>
+            <input type="text" name="category" placeholder="카테고리" required>
+            <input type="text" name="description" placeholder="설명" required>
+            <input type="number" name="amount" placeholder="금액" required>
+            <input type="text" name="memo" placeholder="메모">
+            <button type="submit">등록</button>
+          </form>
+        </section>
+
+        <section class="panel">
+          <h2>월별 내역</h2>
+          <div class="summary-list">
+            {% for month in dashboard.months %}
+              <div class="summary-row">
+                <span class="month">{{ month.month }}</span>
+                <span>{{ "{:,}".format(month.income) }}</span>
+                <span>{{ "{:,}".format(month.expense) }}</span>
+                <strong class="{% if month.net >= 0 %}positive-text{% else %}negative-text{% endif %}">
+                  {{ "{:,}".format(month.net) }}
+                </strong>
+              </div>
+            {% endfor %}
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>항목별 통계</h2>
+          <div class="category-list">
+            {% for category in dashboard.categories %}
+              <div class="category-row">
+                <span>{{ category.category }}</span>
+                <span>{{ category.count }}</span>
+                <strong class="{% if category.net >= 0 %}positive-text{% else %}negative-text{% endif %}">
+                  {{ "{:,}".format(category.net) }}
+                </strong>
+              </div>
+            {% endfor %}
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>월별 항목별 비중</h2>
+          <div class="share-list">
+            {% for item in dashboard.monthly_shares %}
+              <div class="share-row">
+                <span>{{ item.category }}</span>
+                <span class="bar-track">
+                  <span class="bar negative" style="width: {{ item.share }}%"></span>
+                </span>
+                <strong>{{ item.share }}%</strong>
+              </div>
+            {% endfor %}
+          </div>
+        </section>
+      </section>
+
+      <section class="panel table-panel">
+        <h2>거래 목록</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>날짜</th>
+              <th>구분</th>
+              <th>카테고리</th>
+              <th>설명</th>
+              <th>금액</th>
+              <th>메모</th>
+              <th>관리</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for transaction in dashboard.transactions %}
+              <tr data-edit-id="{{ transaction.id }}">
+                <td><input form="update-{{ transaction.id }}" type="date" name="date" value="{{ transaction.date }}" required></td>
+                <td><input form="update-{{ transaction.id }}" type="text" name="type" value="{{ transaction.type }}" required></td>
+                <td><input form="update-{{ transaction.id }}" type="text" name="category" value="{{ transaction.category }}" required></td>
+                <td><input form="update-{{ transaction.id }}" type="text" name="description" value="{{ transaction.description }}" required></td>
+                <td><input form="update-{{ transaction.id }}" type="number" name="amount" value="{{ transaction.amount }}" required></td>
+                <td><input form="update-{{ transaction.id }}" type="text" name="memo" value="{{ transaction.memo }}"></td>
+                <td class="actions">
+                  <form id="update-{{ transaction.id }}" method="post" action="{{ url_for('update', transaction_id=transaction.id) }}">
+                    <button type="submit">수정</button>
+                  </form>
+                  <form method="post" action="{{ url_for('delete', transaction_id=transaction.id) }}">
+                    <button type="submit" class="danger">삭제</button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+    </main>
+  </body>
+</html>
