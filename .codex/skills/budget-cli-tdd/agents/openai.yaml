@@ -1,0 +1,4 @@
+interface:
+  display_name: "Budget CLI TDD"
+  short_description: "TDD workflow for CSV budget CLI apps"
+  default_prompt: "Use $budget-cli-tdd to implement the next CSV budget CLI feature with tests and QA checks."
